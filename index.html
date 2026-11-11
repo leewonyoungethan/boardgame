@@ -7,10 +7,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@500;700;800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
 <style>
-/* 레이아웃: 위쪽은 밤 항구 지도(구역 타일) + 오른쪽 시장·세력 패널, 아래쪽은 종이 카드가 놓이는 내 트레이. 한 가지 밤 테마로 고정. */
+/* 레이아웃: 80칸 사각 보드판이 화면의 주인공. 판 가운데에 주사위·시장·세력·소식. 내 손패 트레이는 화면 아래에 붙어 따라옴. 밤 항구 단일 테마. */
 :root{
-  --ink:#0d1518; --deep:#122027; --tile:#172930; --tile2:#1e343e; --line:#2b4450; --fog:#dfe6e2; --mute:#8ea3a5;
-  --lamp:#f1b84b; --water:#0a232b; --paper:#ebe3cf; --paper-ink:#1c2326;
+  --ink:#0d1518; --deep:#122027; --line:#2b4450; --fog:#dfe6e2; --mute:#8ea3a5;
+  --lamp:#f1b84b; --water:#0a2630; --paper:#ebe3cf; --paper-ink:#1c2326;
   --f-mer:#dcab3a; --f-ord:#a98ce8; --f-dok:#de6d40; --f-scr:#4aa8d8; --f-neu:#9aa8a6;
   --p0:#f2ecdc; --p1:#ee6b88; --p2:#93d661;
   --display:"Hahmlet","Noto Serif KR",serif;
@@ -20,16 +20,16 @@
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--ink);color:var(--fog);font:14px/1.5 var(--body);
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 32px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 0;
   background-image:radial-gradient(ellipse 80% 600px at 50% -200px,#1a3a44 0,transparent 70%);background-repeat:no-repeat}
-#app{max-width:1380px;margin:0 auto;display:grid;gap:14px}
+#app{max-width:1560px;margin:0 auto;display:grid;gap:16px}
 h1,h2,h3{text-wrap:balance}
 :focus-visible{outline:2px solid var(--lamp);outline-offset:2px}
 
 /* header */
 .top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px}
 .brand{display:flex;align-items:baseline;gap:12px}
-.brand h1{font:800 26px/1 var(--display);margin:0;color:var(--lamp);letter-spacing:-.01em}
+.brand h1{font:800 34px/1 var(--display);margin:0;letter-spacing:-.01em;background:linear-gradient(180deg,#ffe6a8,#f1b84b 55%,#b9821f);-webkit-background-clip:text;background-clip:text;color:transparent}
 .brand .sub{color:var(--mute);font-size:13px}
 .brand .sub b{color:var(--fog);font-family:var(--mono)}
 .scores{display:flex;gap:8px;flex-wrap:wrap;flex:1;min-width:0}
@@ -37,14 +37,16 @@ h1,h2,h3{text-wrap:balance}
 .chip.turn{border-color:var(--pc);box-shadow:inset 0 0 0 1px var(--pc)}
 .chip .nm{font-weight:500}
 .chip .vp{font:600 16px var(--mono);font-variant-numeric:tabular-nums}
-.chip .vp small,.d-vp small{font-size:10px;color:var(--mute);margin-left:2px}
-.mini-seal{width:18px;height:18px;border-radius:3px;display:grid;place-items:center;font:700 11px var(--display);background:var(--fc);color:#16110a}
+.chip .vp small{font-size:10px;color:var(--mute);margin-left:2px}
+.chip .at{font-size:11px;color:var(--mute);font-family:var(--mono)}
+.mini-seal{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font:700 11px var(--display);background:var(--fc);color:#16110a}
 .actions{display:flex;gap:6px;flex-wrap:wrap}
 .btn{font:500 13px var(--body);color:var(--fog);background:var(--deep);border:1px solid var(--line);border-radius:7px;padding:7px 12px;cursor:pointer}
 .btn:hover:not(:disabled){border-color:var(--mute)}
 .btn.primary{background:var(--lamp);color:#22180a;border-color:var(--lamp);font-weight:700}
 .btn.primary:hover:not(:disabled){filter:brightness(1.08)}
 .btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.big{padding:10px 18px;font-size:15px}
 
 /* colors */
 .pc0{--pc:var(--p0)} .pc1{--pc:var(--p1)} .pc2{--pc:var(--p2)}
@@ -60,102 +62,175 @@ h1,h2,h3{text-wrap:balance}
 .ic.rm::before,.ic.rm::after{content:"";position:absolute;left:45%;top:-5%;width:2px;height:110%;background:#b33a1a;transform:rotate(45deg)}
 .ic.rm::after{transform:rotate(-45deg)}
 
-/* table */
-.table{display:grid;grid-template-columns:minmax(0,1fr) 344px;gap:14px;align-items:start}
-.panel{background:var(--deep);border:1px solid var(--line);border-radius:12px;padding:12px}
-.ph{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+/* ───── 80칸 보드판 ───── */
+.board-scroll{overflow-x:auto;padding:4px 2px 12px}
+.map{position:relative;min-width:1040px;aspect-ratio:1;display:grid;container-type:inline-size;
+  grid-template-columns:1.7fr repeat(19,minmax(0,1fr)) 1.7fr;grid-template-rows:1.7fr repeat(19,minmax(0,1fr)) 1.7fr;
+  gap:3px;padding:10px;border-radius:20px;border:18px solid transparent;
+  background:
+    repeating-linear-gradient(172deg,rgba(255,255,255,.035) 0 2px,transparent 2px 16px) padding-box,
+    radial-gradient(ellipse at 15% 105%,#16505e 0,transparent 50%) padding-box,
+    linear-gradient(var(--water),var(--water)) padding-box,
+    linear-gradient(140deg,#8a6434,#4a3218 22%,#a07a40 45%,#3d2a14 70%,#7a5a2e) border-box;
+  background-size:100% 320px,auto,auto,auto;
+  box-shadow:0 40px 70px -30px #000,0 0 0 1px #000,inset 0 0 0 2px rgba(241,184,75,.35),inset 0 0 60px rgba(0,0,0,.55);
+  animation:tide 14s linear infinite}
+@keyframes tide{to{background-position:0 320px,0 0,0 0,0 0}}
+.cell{position:relative;min-width:0;min-height:0;display:flex;border-radius:4px;overflow:hidden;
+  background:linear-gradient(160deg,#21404c,#142830 75%);border:1px solid #2f5462;box-shadow:0 3px 6px -3px rgba(0,0,0,.9),inset 0 1px 0 rgba(255,255,255,.07);
+  font-size:clamp(8px,.8cqi,12.5px);line-height:1.15}
+.cell.e-b{flex-direction:column}
+.cell.e-t{flex-direction:column-reverse}
+.cell.e-l{flex-direction:row-reverse}
+.cell.e-r{flex-direction:row}
+.band{flex:none;background:linear-gradient(180deg,color-mix(in srgb,var(--fc),#fff 18%),var(--fc));display:grid;place-items:center;
+  font:700 clamp(8px,.75cqi,12px)/1 var(--display);color:#16110a}
+.e-b>.band,.e-t>.band{height:clamp(11px,1.1cqi,17px)}
+.e-l>.band,.e-r>.band{width:clamp(11px,1.1cqi,17px)}
+.cb{flex:1;min-width:0;min-height:0;padding:3px 4px;display:flex;flex-direction:column;gap:2px}
+.e-l .cb,.e-r .cb{justify-content:center}
+.district{cursor:pointer}
+.district:hover{background:linear-gradient(160deg,#2c5262,#18303a 75%)}
+.d-name{font-weight:700;font-family:var(--display);word-break:keep-all;overflow-wrap:anywhere}
+.d-vp{display:inline-grid;place-items:center;width:clamp(13px,1.25cqi,19px);height:clamp(13px,1.25cqi,19px);border-radius:50%;flex:none;
+  font:700 clamp(7.5px,.72cqi,11px)/1 var(--mono);color:#2d1e05;background:radial-gradient(circle at 35% 30%,#fff0bf,#f1b84b 45%,#a8741a);box-shadow:inset 0 0 0 1px rgba(122,86,12,.7)}
+.d-row{display:flex;align-items:center;gap:3px;flex-wrap:wrap}
+.cubes{display:flex;flex-wrap:wrap;gap:1px 4px}
+.cube{display:inline-flex;align-items:center;gap:1px;font:600 clamp(7.5px,.72cqi,11px)/1 var(--mono);color:var(--pc)}
+.cube::before{content:"";width:clamp(6px,.6cqi,9px);height:clamp(6px,.6cqi,9px);border-radius:2px;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--pc),#fff 35%),var(--pc) 45%,color-mix(in srgb,var(--pc),#000 40%))}
+.cell.lead{box-shadow:inset 0 0 0 2px var(--pc),0 0 12px -2px var(--pc)}
+.cell.inrange{background:linear-gradient(160deg,#2f5866,#1c3a45 75%);border-color:var(--lamp)}
+.cell.aim.district{outline:1px dashed var(--lamp);outline-offset:-1px}
+.cell.pulse{animation:pulse .6s ease-out}
+@keyframes pulse{0%{filter:brightness(1.8)}100%{filter:none}}
+.event .band{--fc:#40616c}
+.event .cb{align-items:center;justify-content:center;text-align:center;color:#a8c3c8}
+.event .glyph{width:clamp(12px,1.4cqi,22px);height:clamp(12px,1.4cqi,22px);background:currentColor;-webkit-mask:var(--g) center/contain no-repeat;mask:var(--g) center/contain no-repeat}
+.event .lb{font-size:.9em}
+.ev-coin{color:#e8c062!important} .ev-rumor{color:#b9a3f0!important} .ev-book{color:#7cc0e4!important} .ev-storm{color:#ef8b6b!important}
+.ev-coin .glyph{--g:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a10 10 0 1 0 0 20a10 10 0 1 0 0-20zm0 4a6 6 0 1 1 0 12a6 6 0 1 1 0-12z'/%3E%3C/svg%3E")}
+.ev-rumor .glyph{--g:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 4h18v12H10l-5 4v-4H3z'/%3E%3C/svg%3E")}
+.ev-book .glyph{--g:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M2 4h8a2 2 0 0 1 2 2v15a2 2 0 0 0-2-2H2zM22 4h-8a2 2 0 0 0-2 2v15a2 2 0 0 1 2-2h8z'/%3E%3C/svg%3E")}
+.ev-storm .glyph{--g:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M14 1L3 14h7l-2 9 11-13h-7z'/%3E%3C/svg%3E")}
+.corner{flex-direction:column;align-items:center;justify-content:center;gap:3px;text-align:center;padding:6px;border:1px solid #3c6472;
+  background:radial-gradient(circle at 50% 35%,#21485a,#0f2128 75%);font-size:clamp(8px,.78cqi,12px)}
+.corner::before{content:"";width:clamp(18px,2.6cqi,40px);height:clamp(18px,2.6cqi,40px);background:#9cc4cc;-webkit-mask:var(--g) center/contain no-repeat;mask:var(--g) center/contain no-repeat;filter:drop-shadow(0 0 8px rgba(156,196,204,.5))}
+.corner b{font:800 clamp(11px,1.35cqi,21px)/1.1 var(--display)}
+.corner span{color:var(--mute)}
+.corner.start{border:2px solid var(--lamp);background:radial-gradient(circle at 50% 35%,#5a4518,#1a1c14 75%);box-shadow:0 0 24px -6px rgba(241,184,75,.6)}
+.corner.start b{color:var(--lamp)}
+.corner.start::before{background:var(--lamp);--g:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M11 2v11H4zM13 4v9h7zM2 15h20l-3 6H5z'/%3E%3C/svg%3E")}
+.corner.light::before{--g:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 22l1-13h4l1 13zM8 7h8l-1-4H9zM1 5l6 2-6 2zM23 5l-6 2 6 2z'/%3E%3C/svg%3E")}
+.corner.customs::before{--g:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 10l9-6 9 6zM5 11h2v8H5zM11 11h2v8h-2zM17 11h2v8h-2zM3 20h18v2H3z'/%3E%3C/svg%3E")}
+.corner.bay::before{--g:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M2 8q5-4 10 0t10 0v3q-5 4-10 0T2 11zM2 15q5-4 10 0t10 0v3q-5 4-10 0T2 18z'/%3E%3C/svg%3E")}
+.ships{position:absolute;right:2px;bottom:2px;display:flex;gap:1px;pointer-events:none;z-index:2}
+.corner .ships{right:50%;translate:50% 0;bottom:4px}
+.ship{width:clamp(12px,1.35cqi,22px);height:clamp(10px,1.1cqi,18px);background:var(--pc);filter:drop-shadow(0 1px 1px #000) drop-shadow(0 0 0 #000);
+  -webkit-mask:var(--sg) center/contain no-repeat;mask:var(--sg) center/contain no-repeat;
+  --sg:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 20'%3E%3Cpath d='M11 0v12H4zM13 2v10h7zM1 13h22l-4 7H5z'/%3E%3C/svg%3E")}
+.ship.cur{animation:bob 1.4s ease-in-out infinite}
+@keyframes bob{50%{translate:0 -2px}}
+
+/* 판 가운데 */
+.center{grid-area:2/2/21/21;position:relative;overflow:hidden;isolation:isolate;border-radius:14px;margin:6px;padding:clamp(12px,1.8cqi,28px);
+  display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);grid-template-areas:"head head" "dice dice" "market facs" "log facs";gap:clamp(8px,1.2cqi,18px);align-content:center;
+  background:radial-gradient(ellipse at 50% 50%,rgba(20,60,72,.92),rgba(8,26,32,.75) 70%);box-shadow:inset 0 0 0 1px rgba(241,184,75,.2),inset 0 0 60px rgba(0,0,0,.6)}
+.beam{position:absolute;left:50%;top:50%;width:200%;aspect-ratio:1;translate:-50% -50%;z-index:-1;pointer-events:none;
+  background:conic-gradient(from 0deg,rgba(255,214,130,.18),transparent 9%,transparent 50%,rgba(255,214,130,.1) 55%,transparent 63%);
+  -webkit-mask:radial-gradient(circle,#000 10%,transparent 55%);mask:radial-gradient(circle,#000 10%,transparent 55%);animation:sweep 18s linear infinite}
+@keyframes sweep{to{rotate:360deg}}
+.compass{position:absolute;inset:50% auto auto 50%;width:80%;translate:-50% -50%;color:#6f9aa3;opacity:.13;z-index:-1;pointer-events:none}
+.c-head{grid-area:head;text-align:center;display:grid;gap:6px;justify-items:center}
+.c-title{font:800 clamp(36px,6cqi,92px)/1 var(--display);letter-spacing:.08em;background:linear-gradient(180deg,#fff0c4,#f1b84b 50%,#a8741a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 18px rgba(241,184,75,.35))}
+.c-sub{font:500 clamp(11px,1.05cqi,16px) var(--display);color:#9cc0c6;letter-spacing:.4em}
+.rtrack{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:4px}
+.rt{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font:600 12px var(--mono);border:1px solid #3a5f6c;color:var(--mute);background:rgba(10,30,36,.8)}
+.rt.done{background:#2b4a56;color:var(--fog);border-color:#2b4a56}
+.rt.now{background:var(--lamp);color:#22180a;border-color:var(--lamp);box-shadow:0 0 16px rgba(241,184,75,.8);transform:scale(1.12)}
+.c-dice{grid-area:dice;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap}
+.dice{display:flex;gap:10px}
+.die{width:52px;height:52px;border-radius:11px;background:linear-gradient(145deg,#fbf6e8,#d9cfb4);box-shadow:inset 0 -4px 0 rgba(0,0,0,.18),0 6px 14px rgba(0,0,0,.55);
+  display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:8px;gap:2px}
+.die i{border-radius:50%}
+.die i.on{background:radial-gradient(circle at 35% 35%,#5a3b2a,#1d1210)}
+.die.rolling{animation:shake .12s linear infinite}
+@keyframes shake{25%{rotate:-8deg;translate:-2px 0}75%{rotate:8deg;translate:2px 0}}
+.c-who{font:700 16px var(--display);padding:6px 16px;border-radius:999px;background:rgba(0,0,0,.35);border:1px solid rgba(241,184,75,.35)}
+.c-panel{background:rgba(9,24,30,.82);border:1px solid #2c4a56;border-radius:12px;padding:12px;min-width:0;backdrop-filter:blur(2px)}
+.c-market{grid-area:market} .c-facs{grid-area:facs} .c-log{grid-area:log}
+.ph{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px}
 .ph h2{font:700 16px var(--display);margin:0}
 .meta{font-size:12px;color:var(--mute)}
-
-/* map */
-.map{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:12px;border-radius:10px;
-  background:radial-gradient(ellipse at 15% 110%,#134552 0,transparent 55%),repeating-linear-gradient(172deg,rgba(255,255,255,.028) 0 2px,transparent 2px 15px),var(--water)}
-.canal,.bay{grid-column:1/-1;display:flex;align-items:center;gap:10px;color:#5f8a92;font:500 11px var(--display);letter-spacing:.3em}
-.canal::before,.canal::after,.bay::before,.bay::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,#2c5a64,transparent)}
-.district{position:relative;background:linear-gradient(180deg,var(--tile2),var(--tile));border:1px solid var(--line);border-top:3px solid var(--fc);
-  border-radius:8px;padding:10px;display:grid;gap:8px;align-content:start;cursor:pointer;transition:transform .15s,background .15s,box-shadow .2s;min-width:0}
-.district:hover{background:linear-gradient(180deg,#244050,var(--tile))}
-.district.lead{box-shadow:0 0 0 2px var(--pc),0 0 22px -6px var(--pc)}
-.district.aim{outline:2px dashed var(--lamp);outline-offset:3px}
-.d-top{display:flex;align-items:center;gap:8px;min-width:0}
-.seal{width:24px;height:24px;flex:none;display:grid;place-items:center;border-radius:4px;background:var(--fc);color:#16110a;font:700 13px var(--display)}
-.d-name{font:700 14px/1.25 var(--display);flex:1;min-width:0}
-.d-vp{font:600 16px var(--mono);color:var(--lamp);white-space:nowrap}
-.cubes{display:grid;gap:4px}
-.crow{display:flex;align-items:center;gap:6px;font:500 12px var(--mono);min-height:12px}
-.pips{display:flex;flex-wrap:wrap;gap:2px;flex:1;min-width:0}
-.pip{width:9px;height:9px;border-radius:2px;background:var(--pc);box-shadow:inset 0 -2px 0 rgba(0,0,0,.25)}
-.more{font-size:10px;color:var(--pc);margin-left:2px}
-.crow .n{min-width:1.6em;text-align:right;color:var(--pc);font-variant-numeric:tabular-nums}
-.crow.zero .n{color:var(--mute);opacity:.6}
-.d-foot{font-size:12px;color:var(--mute);border-top:1px solid var(--line);padding-top:6px}
-.d-foot b{color:var(--pc)}
-.district.pulse{animation:pulse .6s ease-out}
-@keyframes pulse{0%{transform:scale(1.04);background:#2d4d5c}100%{transform:none}}
-
-/* drop feedback */
-.drop-ok{outline:2px dashed var(--lamp)!important;outline-offset:3px}
-.drop-hover{transform:translateY(-3px);background:linear-gradient(180deg,#2d5060,#1b3540)!important}
-.playzone.drop-hover,.pile.drop-hover,.tray.drop-hover{transform:none;background:#1b3540!important}
-
-/* cards */
-.card{width:112px;height:158px;flex:none;background:var(--paper);color:var(--paper-ink);border-radius:8px;display:flex;flex-direction:column;
-  box-shadow:0 2px 0 rgba(0,0,0,.35),0 10px 18px -8px rgba(0,0,0,.8);overflow:hidden;position:relative;user-select:none;-webkit-user-select:none;
-  touch-action:none;cursor:grab;transition:transform .15s,filter .15s;padding-bottom:8px}
-.card:hover{transform:translateY(-4px)}
-.card.sm{width:98px;height:144px}
-.c-band{background:var(--fc);display:flex;align-items:center;gap:5px;padding:4px 6px;min-height:28px;font-size:10px;font-weight:700;color:#191309}
-.c-seal{font:700 12px var(--display)}
-.c-fac{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.c-cost{width:21px;height:21px;flex:none;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ffe08a,#c38d1c);display:grid;place-items:center;font:700 12px var(--mono);color:#3a2706;box-shadow:inset 0 0 0 1px #7a560c}
-.c-name{font:700 14px/1.2 var(--display);padding:8px 8px 5px}
-.card.sm .c-name{font-size:13px}
-.c-fx{display:grid;gap:3px;padding:0 8px;font-size:11.5px;font-weight:500;line-height:1.3;position:relative;z-index:1}
-.card.sm .c-fx{font-size:11px}
-.c-fx span{display:flex;align-items:center;gap:4px}
-.c-tag{margin:auto 8px 0;font-size:10px;font-weight:700;letter-spacing:.03em;color:#8a3413;border:1px solid currentColor;border-radius:3px;padding:1px 5px;align-self:flex-start;position:relative;z-index:1;background:var(--paper)}
-.c-wm{position:absolute;right:-4px;bottom:-16px;font:800 66px/1 var(--display);color:var(--fc);opacity:.2;pointer-events:none}
-.card.poor{filter:saturate(.35) brightness(.62);cursor:not-allowed}
-.card.poor:hover{transform:none}
-.card.sel{outline:3px solid var(--lamp);outline-offset:2px;transform:translateY(-10px)}
-.card.dealt{animation:deal .45s cubic-bezier(.2,.8,.3,1) both;animation-delay:calc(var(--i) * 70ms)}
-@keyframes deal{from{opacity:0;transform:translate(-90px,10px) rotate(-10deg)}}
-.card.sold{background:transparent;border:1px dashed var(--line);box-shadow:none;color:var(--mute);display:grid;place-items:center;cursor:default;font-size:12px}
-.ghost{position:fixed;left:0;top:0;pointer-events:none;z-index:100;margin:0;box-shadow:0 22px 36px rgba(0,0,0,.65);opacity:.96;transition:none}
-.dragging-src{opacity:.25}
-body.is-dragging,body.is-dragging *{cursor:grabbing!important}
-
-/* market + side */
-.side{display:grid;gap:14px;min-width:0}
-.mkt{display:flex;flex-wrap:wrap;gap:8px}
 .hint{font-size:12px;color:var(--mute);margin:-4px 0 10px}
-.fac{padding:10px 0;border-top:1px solid var(--line);display:grid;gap:5px}
-.fac:first-of-type{border-top:0;padding-top:0}
-.fac-head{display:flex;align-items:center;gap:8px}
+.mkt{display:flex;flex-wrap:wrap;gap:8px}
+.facgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.fac{display:grid;gap:4px;padding:8px;border-radius:8px;background:rgba(0,0,0,.25);border-top:3px solid var(--fc)}
+.fac-head{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .fac-head b{font:700 14px var(--display);flex:1}
-.ally{font-size:11px;padding:2px 7px;border-radius:999px;border:1px solid var(--line);color:var(--mute);white-space:nowrap}
+.seal{width:24px;height:24px;flex:none;display:grid;place-items:center;border-radius:50%;background:var(--fc);color:#16110a;font:700 13px var(--display)}
+.ally{font-size:11px;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--mute);white-space:nowrap}
 .ally.on{border-color:var(--pc);color:var(--pc)}
-.perk{margin:0;font-size:12px;color:var(--mute)}
-.rrow{display:flex;align-items:center;gap:8px;font-size:12px}
-.rn{width:78px;color:var(--pc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rpips{display:flex;gap:3px}
-.rpip{width:14px;height:6px;border-radius:2px;background:#24404b}
+.perk{margin:0;font-size:11.5px;color:var(--mute);line-height:1.35}
+.rrow{display:flex;align-items:center;gap:6px;font-size:11.5px}
+.rn{width:66px;color:var(--pc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rpips{display:flex;gap:2px}
+.rpip{width:11px;height:6px;border-radius:2px;background:#24404b}
 .rpip.on{background:var(--pc)}
 .rpip.th{box-shadow:0 0 0 1px var(--fc)}
-.rrow b{font:600 12px var(--mono);margin-left:auto;color:var(--pc)}
-.log{list-style:none;margin:0;padding:0;max-height:210px;overflow:auto;font-size:12px;display:grid;gap:3px}
+.rrow b{font:600 11.5px var(--mono);margin-left:auto;color:var(--pc)}
+.log{list-style:none;margin:0;padding:0;max-height:180px;overflow:auto;font-size:12px;display:grid;gap:3px}
 .log li{color:var(--mute);line-height:1.4}
 .log li b{color:var(--pc);font-weight:500}
 .log li.sys{color:var(--lamp)}
 
-/* tray */
-.tray{display:grid;grid-template-columns:auto minmax(0,1fr) 210px 230px;grid-template-areas:"status status status status" "piles hand play res";
-  gap:12px 16px;background:var(--deep);border:1px solid var(--line);border-radius:12px;padding:14px;transition:background .15s}
+/* drop feedback */
+.drop-ok{outline:2px dashed var(--lamp)!important;outline-offset:-2px}
+.drop-hover{filter:brightness(1.5)}
+.playzone.drop-hover,.pile.drop-hover,.tray.drop-hover{filter:none;background:#1b3540!important}
+
+/* cards */
+.card{width:118px;height:166px;flex:none;background:var(--paper);color:var(--paper-ink);border-radius:9px;display:flex;flex-direction:column;
+  box-shadow:0 2px 0 rgba(0,0,0,.35),0 10px 18px -8px rgba(0,0,0,.8);overflow:hidden;position:relative;user-select:none;-webkit-user-select:none;
+  touch-action:none;cursor:grab;transition:transform .15s,filter .15s;padding-bottom:8px}
+.card:hover{transform:translateY(-4px)}
+.card.sm{width:98px;height:142px}
+.c-band{background:var(--fc);display:flex;align-items:center;gap:5px;padding:4px 6px;min-height:28px;font-size:10px;font-weight:700;color:#191309}
+.c-seal{font:700 12px var(--display)}
+.c-fac{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c-cost{width:21px;height:21px;flex:none;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ffe08a,#c38d1c);display:grid;place-items:center;font:700 12px var(--mono);color:#3a2706;box-shadow:inset 0 0 0 1px #7a560c}
+.c-name{font:700 14.5px/1.2 var(--display);padding:8px 8px 5px}
+.card.sm .c-name{font-size:13px}
+.c-fx{display:grid;gap:3px;padding:0 8px;font-size:11.5px;font-weight:500;line-height:1.3;position:relative;z-index:1}
+.card.sm .c-fx{font-size:11px}
+.c-fx span{display:flex;align-items:center;gap:4px}
+.c-tag{margin:auto 8px 0;font-size:10px;font-weight:700;color:#8a3413;border:1px solid currentColor;border-radius:3px;padding:1px 5px;align-self:flex-start;position:relative;z-index:1;background:var(--paper)}
+.c-wm{position:absolute;right:-4px;bottom:-16px;font:800 66px/1 var(--display);color:var(--fc);opacity:.2;pointer-events:none}
+.card.poor{filter:saturate(.35) brightness(.62);cursor:not-allowed}
+.card.poor:hover{transform:none}
+.card.sold{background:transparent;border:1px dashed var(--line);box-shadow:none;color:var(--mute);display:grid;place-items:center;cursor:default;font-size:12px}
+.ghost{position:fixed;left:0;top:0;pointer-events:none;z-index:100;margin:0!important;box-shadow:0 22px 36px rgba(0,0,0,.65);opacity:.96;transition:none!important;animation:none!important}
+.dragging-src{opacity:.25}
+body.is-dragging,body.is-dragging *{cursor:grabbing!important}
+
+/* 손패 부채꼴 */
+.hand{display:flex;align-items:flex-end;min-height:180px;padding:14px 8px 4px 4px}
+.hand .card{--r:0deg;--y:0px;transform:translateY(var(--y)) rotate(var(--r));transform-origin:50% 120%}
+.hand .card+.card{margin-left:-22px}
+.hand .card:hover,.hand .card:focus-visible{transform:translateY(-16px) rotate(0);z-index:5}
+.hand .card.sel{outline:3px solid var(--lamp);outline-offset:2px;transform:translateY(-20px) rotate(0);z-index:6}
+.card.dealt{animation:deal .45s cubic-bezier(.2,.8,.3,1) both;animation-delay:calc(var(--i) * 70ms)}
+@keyframes deal{from{opacity:0;transform:translate(-120px,30px) rotate(-14deg)}}
+
+/* tray (화면 아래 고정) */
+.tray{position:sticky;bottom:0;z-index:30;display:grid;grid-template-columns:auto minmax(0,1fr) 210px 240px;grid-template-areas:"status status status status" "piles hand play res";
+  gap:8px 16px;background:linear-gradient(180deg,#152731,#0f1d23);border:1px solid var(--line);border-bottom:0;border-radius:14px 14px 0 0;padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px));
+  box-shadow:0 -18px 40px -10px rgba(0,0,0,.8)}
 .tray.locked .hand{opacity:.6}
-.status{grid-area:status;margin:0;font-size:13px;color:var(--fog);padding:8px 12px;border-radius:8px;background:#0f1b20;border-left:3px solid var(--lamp)}
-.tray h3{font:700 13px var(--display);margin:0 0 8px;color:var(--mute);letter-spacing:.04em}
-.piles{grid-area:piles;display:flex;flex-direction:column;gap:10px}
-.pile{width:76px;height:104px;border-radius:7px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:1px solid var(--line)}
+.status{grid-area:status;margin:0;font-size:13px;padding:6px 12px;border-radius:8px;background:#0b161a;border-left:3px solid var(--lamp)}
+.tray h3{font:700 12px var(--display);margin:0;color:var(--mute);letter-spacing:.04em}
+.piles{grid-area:piles;display:flex;flex-direction:column;gap:8px;justify-content:center}
+.pile{width:70px;height:94px;border-radius:7px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:1px solid var(--line)}
 .pile b{font:600 20px var(--mono)}
 .pile .pl{font-size:11px;color:var(--mute)}
 .pile.deck{background:repeating-linear-gradient(45deg,#1b323b 0 6px,#16282f 6px 12px);box-shadow:3px 3px 0 #0b1316,6px 6px 0 #091013}
@@ -163,21 +238,20 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important}
 @keyframes shuf{25%{transform:translateX(-5px) rotate(-4deg)}75%{transform:translateX(5px) rotate(4deg)}}
 .pile.discard{border-style:dashed;background:#0f1b20}
 .hand-wrap{grid-area:hand;min-width:0}
-.hand{display:flex;flex-wrap:wrap;gap:8px;min-height:158px;align-items:flex-start}
 .empty{color:var(--mute);font-size:12px;margin:0}
-.playzone{grid-area:play;border:1px dashed #3a5a66;border-radius:10px;padding:10px;min-height:150px;background:repeating-linear-gradient(135deg,transparent 0 10px,rgba(255,255,255,.015) 10px 20px);transition:background .15s}
-.playzone ul{list-style:none;margin:0;padding:0;display:grid;gap:4px}
-.playzone li{display:flex;align-items:center;gap:6px;font-size:12px;padding:3px 6px;border-radius:4px;background:#0f1b20}
+.playzone{grid-area:play;border:1px dashed #3a5a66;border-radius:10px;padding:8px;max-height:200px;overflow:auto;background:repeating-linear-gradient(135deg,transparent 0 10px,rgba(255,255,255,.015) 10px 20px)}
+.playzone ul{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:3px}
+.playzone li{display:flex;align-items:center;gap:6px;font-size:12px;padding:2px 6px;border-radius:4px;background:#0b161a}
 .playzone li .dot{width:8px;height:8px;border-radius:2px;background:var(--fc)}
-.res{grid-area:res;display:grid;gap:10px;align-content:start}
-.stat{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:8px;background:#0f1b20}
+.res{grid-area:res;display:grid;gap:7px;align-content:center}
+.stat{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;border-radius:8px;background:#0b161a}
 .stat .lbl{font-size:12px;color:var(--mute)}
-.stat .num{font:600 22px var(--mono);display:flex;align-items:center;gap:6px}
-.tokens{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;align-items:center;min-height:26px}
-.token{width:22px;height:22px;background:linear-gradient(135deg,#a58bf0,#6a49c4);transform:rotate(45deg);border-radius:3px;cursor:grab;touch-action:none;box-shadow:0 2px 0 #2e1f63;margin:3px}
-.token.ghost{transform:rotate(45deg) scale(1.2)}
+.stat .num{font:600 20px var(--mono);display:flex;align-items:center;gap:6px}
+.tokens{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;align-items:center;min-height:24px}
+.token{width:20px;height:20px;background:linear-gradient(135deg,#a58bf0,#6a49c4);transform:rotate(45deg);border-radius:3px;cursor:grab;touch-action:none;box-shadow:0 2px 0 #2e1f63;margin:3px}
 .tokens .x{font:600 13px var(--mono);color:var(--mute)}
-.left{font-size:12px;color:var(--mute);margin:0;text-align:center}
+.btnrow{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.left{font-size:11.5px;color:var(--mute);margin:0;text-align:center}
 
 /* modal */
 .modal-back{position:fixed;inset:0;background:rgba(4,9,11,.74);display:grid;place-items:center;z-index:50;padding:16px}
@@ -188,34 +262,31 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important}
 .modal ol,.modal ul{padding-left:20px;margin:6px 0}
 .modal .foot{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
 .rep-list{list-style:none;padding:0!important;display:grid;gap:6px}
-.rep-list li{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:7px;background:#0f1b20}
-.rep-list .grow{flex:1}
+.rep-list li{display:grid;gap:2px;padding:8px 10px;border-radius:7px;background:#0f1b20}
 .rep-list b{color:var(--pc)}
+.rep-list .ds{font-size:12px;color:var(--mute)}
 .score-t{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
 .score-t th,.score-t td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
 .score-t th:first-child,.score-t td:first-child{text-align:left}
 .score-t td:first-child{color:var(--pc);font-weight:700}
 .score-t .tot{font:700 16px var(--mono);color:var(--lamp)}
 
-#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:#25404b;color:var(--fog);border:1px solid var(--lamp);
+#toast{position:fixed;left:50%;bottom:calc(240px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:#25404b;color:var(--fog);border:1px solid var(--lamp);
   padding:9px 16px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:120;max-width:calc(100% - 32px);text-align:center}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 
-@media (max-width:1060px){
-  .table{grid-template-columns:minmax(0,1fr)}
-  .side{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
-  .tray{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"status status" "hand hand" "play res" "piles res"}
-  .piles{flex-direction:row}
+@media (max-width:1100px){
+  .tray{grid-template-columns:auto minmax(0,1fr) 220px;grid-template-areas:"status status status" "piles hand res" "piles hand play"}
 }
-@media (max-width:640px){
-  .map{grid-template-columns:repeat(2,minmax(0,1fr));padding:8px;gap:8px}
-  .side{grid-template-columns:minmax(0,1fr)}
-  .tray{grid-template-columns:minmax(0,1fr);grid-template-areas:"status" "hand" "res" "play" "piles";padding:12px}
-  .card{width:96px;height:142px}
-  .card.sm{width:92px;height:138px}
-  .c-name{font-size:13px}
-  .brand h1{font-size:22px}
-  .pile{width:64px;height:84px}
+@media (max-width:760px){
+  .tray{position:static;border-radius:14px;border-bottom:1px solid var(--line);grid-template-columns:minmax(0,1fr);grid-template-areas:"status" "hand" "res" "play" "piles";margin-bottom:16px}
+  .piles{flex-direction:row}
+  .hand{flex-wrap:wrap;gap:8px;overflow:visible;min-height:0}
+  .hand .card{transform:none!important}
+  .hand .card+.card{margin-left:0}
+  .card{width:96px;height:140px}
+  .brand h1{font-size:26px}
+  #toast{bottom:calc(20px + env(safe-area-inset-bottom,0px))}
 }
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
@@ -226,10 +297,10 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important}
 <script>
 // ───────── 데이터 ─────────
 const FACTIONS={
-  mer:{name:'상인 조합',seal:'商',wa:'과',perk:'동맹 효과 · 턴 시작마다 금화 +1'},
-  ord:{name:'등불 수도회',seal:'燈',wa:'와',perk:'동맹 효과 · 턴 시작마다 영향력 +1'},
-  dok:{name:'부두 노조',seal:'埠',wa:'와',perk:'동맹 효과 · 시장 카드 비용 1 할인 (최소 1)'},
-  scr:{name:'서기원',seal:'書',wa:'과',perk:'동맹 효과 · 턴 시작 손패 6장'},
+  mer:{name:'상인 조합',seal:'商',wa:'과',perk:'턴 시작마다 금화 +1'},
+  ord:{name:'등불 수도회',seal:'燈',wa:'와',perk:'턴 시작마다 영향력 +1'},
+  dok:{name:'부두 노조',seal:'埠',wa:'와',perk:'시장 카드 비용 1 할인 (최소 1)'},
+  scr:{name:'서기원',seal:'書',wa:'과',perk:'턴 시작 손패 6장'},
 };
 const FKEYS=['mer','ord','dok','scr'];
 const CARDS={
@@ -252,11 +323,20 @@ const CARDS={
   ledger:{name:'비밀 장부',f:'scr',cost:6,inf:3,draw:1,copies:2},
 };
 const PLAYERS=[{name:'나',human:true},{name:'로웨나 남작'},{name:'고드윈 선장'}];
-const DISTRICTS=[
-  {name:'금화 거래소',f:'mer',vp:3},{name:'등불 성당',f:'ord',vp:3},{name:'대서고',f:'scr',vp:3},{name:'향신료 시장',f:'mer',vp:2},
-  {name:'7번 부두',f:'dok',vp:2},{name:'조선소',f:'dok',vp:3},{name:'순례자 다리',f:'ord',vp:2},{name:'지도 제작소',f:'scr',vp:2},
-];
-const ROUNDS=8, ALLY_REP=4, ALLY_VP=4, HAND=5;
+const N=80, RANGE=6, ROUNDS=10, ALLY_REP=4, ALLY_VP=4, HAND=5, PASS_COIN=2;
+const DNAMES={
+  mer:['금화 거래소','향신료 시장','비단 상가','환전 골목','보석 공방','소금 창고','경매장','상인 회관'],
+  ord:['등불 성당','순례자 다리','종탑','수도원 정원','촛불 거리','고해소','성수 우물','기도 광장'],
+  dok:['7번 부두','조선소','밧줄 공장','어시장','화물 창고','방파제','선원 숙소','크레인 광장'],
+  scr:['대서고','지도 제작소','인쇄소','천문대','기록청','잉크 공방','학자 거리','암호실'],
+};
+const SIDE_FACS=[['mer','dok'],['ord','mer'],['scr','ord'],['dok','scr']];
+const D_SLOTS=[1,2,4,6,10,12,13,16];   // 한 변 19칸 중 구역이 놓이는 자리
+const VP_PATTERN=[1,1,2,3];
+const EVENT_CYCLE=['coin','rumor','book','coin','storm','rumor','book','coin','rumor','book','rumor'];
+const EVENTS={coin:{name:'금화 상자',tip:'멈추면 금화 +2'},rumor:{name:'뒷소문',tip:'멈추면 영향력 +2'},book:{name:'헌책방',tip:'멈추면 카드 1장 뽑기'},storm:{name:'폭풍',tip:'멈추면 내 큐브 1개 잃음'}};
+const CORNER_DEF={0:{key:'start',name:'출항',tip:`지나가면 금화 +${PASS_COIN}`},20:{key:'light',name:'등대',tip:'멈추면 영향력 +2'},40:{key:'customs',name:'세관',tip:'멈추면 금화 +3'},60:{key:'bay',name:'안개 낀 만',tip:'멈추면 카드 2장 뽑기'}};
+const PIPS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
 
 // ───────── 유틸 ─────────
 const app=document.getElementById('app');
@@ -264,13 +344,15 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let S, uidc=1, drag=null, toastT;
 const me=()=>S.players[0];
 const myTurn=()=>S&&S.turn===0&&!S.busy&&!S.over;
-const delay=()=>S.fast?150:460;
+const delay=()=>S.fast?120:420;
+const d6=()=>1+Math.floor(Math.random()*6);
 const mk=key=>({uid:uidc++,key});
-// Fisher–Yates 셔플
-function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}  // Fisher–Yates
 function toast(t){const el=document.getElementById('toast');el.textContent=t;el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2600);}
 function log(p,html,extra){S.log.push({pid:p?p.id:null,html,...extra});if(S.log.length>90)S.log.shift();}
 const costFor=(p,d)=>Math.max(1,d.cost-(S.alliances.dok===p.id?1:0));
+const ringDist=(a,b)=>{const x=Math.abs(a-b);return Math.min(x,N-x);};
+const inRange=(p,d)=>p.rolled&&ringDist(p.pos,d.pos)<=RANGE;
 
 function fxParts(d){const a=[];
   if(d.coin)a.push(['coin',`+${d.coin} 금화`]);
@@ -280,20 +362,42 @@ function fxParts(d){const a=[];
   if(d.draw)a.push(['draw',`카드 ${d.draw}장 뽑기`]);
   return a;}
 
+function buildBoard(){
+  const spaces=[],dists=[],ni={mer:0,ord:0,dok:0,scr:0};let ev=0;
+  for(let i=0;i<N;i++){
+    if(i%20===0){spaces.push({i,type:'corner',...CORNER_DEF[i]});continue;}
+    const side=Math.floor(i/20),k=i%20-1,slot=D_SLOTS.indexOf(k);
+    if(slot>=0){
+      const f=SIDE_FACS[side][slot<4?0:1];
+      const d={id:dists.length,pos:i,f,name:DNAMES[f][ni[f]++],vp:VP_PATTERN[slot%4],cubes:[0,0,0]};
+      dists.push(d);spaces.push({i,type:'district',did:d.id});
+    }else spaces.push({i,type:'event',ev:EVENT_CYCLE[ev++%EVENT_CYCLE.length]});
+  }
+  return {spaces,dists};
+}
+// 칸 번호 → [행, 열, 판의 어느 변]
+function cellPos(i){
+  if(i===0)return[21,21,'c']; if(i<20)return[21,21-i,'b'];
+  if(i===20)return[21,1,'c'];  if(i<40)return[21-(i-20),1,'l'];
+  if(i===40)return[1,1,'c'];   if(i<60)return[1,1+(i-40),'t'];
+  if(i===60)return[1,21,'c'];  return[1+(i-60),21,'r'];
+}
+
 // ───────── 게임 진행 ─────────
 function newGame(){
   uidc=1;
-  const gen=(S?.gen||0)+1, fast=S?.fast||false;
+  const gen=(S?.gen||0)+1,fast=S?.fast||false;
   const players=PLAYERS.map((p,i)=>{
     const deck=[];for(let k=0;k<6;k++)deck.push(mk('coin'));for(let k=0;k<4;k++)deck.push(mk('whisper'));
-    return {id:i,...p,deck:shuffle(deck),hand:[],discard:[],played:[],coin:0,inf:0,vp:0,rep:{mer:0,ord:0,dok:0,scr:0}};
+    return {id:i,...p,deck:shuffle(deck),hand:[],discard:[],played:[],coin:0,inf:0,vp:0,pos:0,rolled:false,rep:{mer:0,ord:0,dok:0,scr:0}};
   });
   const md=[];for(const k in CARDS){const d=CARDS[k];if(d.f)for(let c=0;c<d.copies;c++)md.push(mk(k));}
-  S={gen,fast,round:1,turn:0,players,districts:DISTRICTS.map((d,i)=>({...d,id:i,cubes:[0,0,0]})),
+  const B=buildBoard();
+  S={gen,fast,round:1,turn:0,players,spaces:B.spaces,districts:B.dists,dice:[3,4],rolling:false,
      marketDeck:shuffle(md),market:[],alliances:{mer:null,ord:null,dok:null,scr:null},log:[],busy:false,over:false,
      targeting:null,modal:null,report:null,fresh:null,pulse:null,shuffled:null,banner:null};
   for(let i=0;i<5;i++)S.market.push(S.marketDeck.pop());
-  log(null,'1라운드 시작. 항구의 여덟 구역이 비어 있다.');
+  log(null,'1라운드 시작. 세 척의 배가 출항에서 떠난다.');
   startTurn(me());
   render();
 }
@@ -312,18 +416,49 @@ function draw(p,n){
 }
 
 function startTurn(p){
-  p.coin=0;p.inf=0;
+  p.coin=0;p.inf=0;p.rolled=false;
   if(S.alliances.mer===p.id)p.coin+=1;
   if(S.alliances.ord===p.id)p.inf+=1;
   draw(p,S.alliances.scr===p.id?HAND+1:HAND);
 }
 
+async function rollAndMove(p,gen){
+  S.rolling=true;
+  for(let k=0;k<7;k++){S.dice=[d6(),d6()];render();await sleep(S.fast?30:70);if(S.gen!==gen)return false;}
+  S.rolling=false;
+  const a=d6(),b=d6(),steps=a+b;S.dice=[a,b];
+  log(p,`주사위 ${a}+${b} · ${steps}칸 항해`);S.banner=`주사위 ${a}+${b}`;
+  for(let k=0;k<steps;k++){
+    p.pos=(p.pos+1)%N;
+    if(p.pos===0){p.coin+=PASS_COIN;log(p,`출항 통과 · 금화 +${PASS_COIN}`);}
+    render();await sleep(S.fast?30:105);if(S.gen!==gen)return false;
+  }
+  p.rolled=true;land(p);S.pulse=p.pos;render();
+  return true;
+}
+
+function land(p){
+  const s=S.spaces[p.pos];
+  if(s.type==='corner'){
+    if(s.key==='light'){p.inf+=2;log(p,'등대에 정박 · 영향력 +2');}
+    else if(s.key==='customs'){p.coin+=3;log(p,'세관에 정박 · 금화 +3');}
+    else if(s.key==='bay'){draw(p,2);log(p,'안개 낀 만에 정박 · 카드 2장 뽑기');}
+  }else if(s.type==='event'){
+    if(s.ev==='coin'){p.coin+=2;log(p,'금화 상자 · 금화 +2');}
+    else if(s.ev==='rumor'){p.inf+=2;log(p,'뒷소문 · 영향력 +2');}
+    else if(s.ev==='book'){draw(p,1);log(p,'헌책방 · 카드 1장 뽑기');}
+    else if(s.ev==='storm'){
+      let t=null;S.districts.forEach(d=>{if(d.cubes[p.id]>0&&(!t||d.cubes[p.id]>t.cubes[p.id]))t=d;});
+      if(t){t.cubes[p.id]--;log(p,`폭풍 · ${t.name}의 내 큐브 1개 유실`);}else log(p,'폭풍 · 잃을 큐브가 없었다');
+    }
+  }else{
+    const d=S.districts[s.did];d.cubes[p.id]++;log(p,`${d.name}에 정박 · 큐브 1개 무료 배치`);
+  }
+}
+
 function removeFrom(cubes,pid,n){
   const out=[0,0,0];
-  for(let k=0;k<n;k++){
-    let t=-1,best=0;cubes.forEach((v,i)=>{if(i!==pid&&v>best){best=v;t=i;}});
-    if(t<0)break;cubes[t]--;out[t]++;
-  }
+  for(let k=0;k<n;k++){let t=-1,best=0;cubes.forEach((v,i)=>{if(i!==pid&&v>best){best=v;t=i;}});if(t<0)break;cubes[t]--;out[t]++;}
   return out;
 }
 
@@ -339,9 +474,7 @@ function playCard(p,uid,did){
     const dist=S.districts[did];txt+=` → ${dist.name}`;
     if(d.remove){const r=removeFrom(dist.cubes,p.id,d.remove);const s=r.map((n,j)=>n?`${S.players[j].name} ${n}개`:'').filter(Boolean).join(', ');txt+=s?` (제거: ${s})`:' (제거할 큐브 없음)';}
     if(d.place){dist.cubes[p.id]+=d.place;txt+=` +큐브 ${d.place}`;}
-  }else{
-    txt+=' 사용';
-  }
+  }else txt+=' 사용';
   if(d.draw)draw(p,d.draw);
   log(p,txt);
   return true;
@@ -385,14 +518,13 @@ function leaderOf(d){
 }
 
 function scoreRound(){
-  const rows=[],gain=[0,0,0];
+  const won=[[],[],[]],gain=[0,0,0];
   S.districts.forEach(d=>{
     const L=leaderOf(d);
-    if(L.w!=null){const p=S.players[L.w];p.vp+=d.vp;gain[L.w]+=d.vp;p.rep[d.f]++;checkAlliance(d.f,p);}
-    rows.push({d,...L});
+    if(L.w!=null){const p=S.players[L.w];p.vp+=d.vp;gain[L.w]+=d.vp;won[L.w].push(d.name);p.rep[d.f]++;checkAlliance(d.f,p);}
   });
   log(null,`${S.round}라운드 결산: `+S.players.map((p,i)=>`${p.name} +${gain[i]}`).join(', '));
-  S.report={round:S.round,rows,gain};
+  S.report={round:S.round,won,gain};
   S.round++;
   if(S.round<=ROUNDS)log(null,`${S.round}라운드 시작`);
 }
@@ -418,8 +550,8 @@ function cubeValue(d,pid){
   return d.vp/need;
 }
 function bestCube(p){
-  let best=0,bs=-1e9;
-  S.districts.forEach(d=>{const sim=d.cubes.slice();sim[p.id]++;
+  let best=-1,bs=-1e9;
+  S.districts.forEach(d=>{if(!inRange(p,d))return;const sim=d.cubes.slice();sim[p.id]++;
     const s=posScore(sim,p.id,d.vp)-posScore(d.cubes,p.id,d.vp)+0.35*cubeValue(d,p.id)+Math.random()*0.15;
     if(s>bs){bs=s;best=d.id;}});
   return best;
@@ -447,13 +579,15 @@ function bestBuy(p){
 }
 async function aiTurn(p,gen){
   const step=async(banner,pulse)=>{S.banner=banner;S.pulse=pulse??null;render();await sleep(delay());return S.gen===gen;};
+  if(!await rollAndMove(p,gen))return false;
+  if(!await step(S.banner,p.pos))return false;
   while(p.hand.length){
     let c=p.hand.find(c=>!CARDS[c.key].target);
     if(c){playCard(p,c.uid);if(!await step(`${CARDS[c.key].name} 사용`))return false;continue;}
     c=p.hand[0];const d=CARDS[c.key],did=bestTarget(p,d);playCard(p,c.uid,did);
-    if(!await step(`${d.name} → ${S.districts[did].name}`,did))return false;
+    if(!await step(`${d.name} → ${S.districts[did].name}`,S.districts[did].pos))return false;
   }
-  while(p.inf>0){const did=bestCube(p);placeCube(p,did);if(!await step(`큐브 → ${S.districts[did].name}`,did))return false;}
+  while(p.inf>0){const did=bestCube(p);if(did<0)break;placeCube(p,did);if(!await step(`큐브 → ${S.districts[did].name}`,S.districts[did].pos))return false;}
   for(let g=0;g<6;g++){const i=bestBuy(p);if(i<0)break;const name=CARDS[S.market[i].key].name;buy(p,i);if(!await step(`${name} 구매`))return false;}
   return true;
 }
@@ -465,7 +599,7 @@ function humanPlay(uid,did){
   const d=CARDS[c.key];
   if(d.target&&did==null){S.targeting=S.targeting===uid?null:uid;render();return;}
   playCard(me(),uid,d.target?did:undefined);
-  S.targeting=null;if(d.target)S.pulse=did;render();
+  S.targeting=null;if(d.target)S.pulse=S.districts[did].pos;render();
 }
 function humanBuy(i){
   if(!myTurn())return;const c=S.market[i];if(!c)return;
@@ -474,9 +608,11 @@ function humanBuy(i){
   buy(me(),i);render();
 }
 function humanCube(did){
-  if(!myTurn())return;
-  if(me().inf<1){toast('영향력이 없습니다. 영향력을 주는 카드를 먼저 내세요.');return;}
-  placeCube(me(),did);S.pulse=did;render();
+  if(!myTurn())return;const p=me(),d=S.districts[did];
+  if(!p.rolled){toast('먼저 주사위를 굴려 배를 움직이세요.');return;}
+  if(!inRange(p,d)){toast(`배에서 ${RANGE}칸 안의 구역에만 큐브를 놓을 수 있어요.`);return;}
+  if(p.inf<1){toast('영향력이 없습니다. 영향력을 주는 카드를 먼저 내세요.');return;}
+  placeCube(p,did);S.pulse=d.pos;render();
 }
 function districtTap(did){
   if(!myTurn())return;
@@ -488,12 +624,18 @@ function playAll(){
   while((c=me().hand.find(c=>!CARDS[c.key].target)))playCard(me(),c.uid);
   render();
 }
+async function humanRoll(){
+  if(!myTurn()||me().rolled)return;
+  const gen=S.gen;S.busy=true;S.targeting=null;
+  const ok=await rollAndMove(me(),gen);if(!ok)return;
+  S.busy=false;S.banner=null;render();
+}
 async function humanEndTurn(){
-  if(!myTurn())return;
+  if(!myTurn()||!me().rolled)return;
   const gen=S.gen;S.busy=true;S.targeting=null;
   cleanup(me());
   for(let t=1;t<3;t++){
-    S.turn=t;const ai=S.players[t];S.banner='생각하는 중';startTurn(ai);render();
+    S.turn=t;const ai=S.players[t];S.banner='주사위를 굴리는 중';startTurn(ai);render();
     await sleep(delay());if(S.gen!==gen)return;
     if(!await aiTurn(ai,gen))return;
     cleanup(ai);
@@ -515,7 +657,8 @@ function cardHTML(c,o){
   }else{
     if(S.targeting===c.uid)cls+=' sel';
     if(S.fresh&&S.fresh.has(c.uid))cls+=' dealt';
-    attrs=`data-drag="hand" data-id="${c.uid}" data-fk="h-${c.uid}" style="--i:${o.i}" aria-label="${d.name} 내기"`;
+    const mid=(o.n-1)/2,off=o.i-mid;
+    attrs=`data-drag="hand" data-id="${c.uid}" data-fk="h-${c.uid}" style="--i:${o.i};--r:${(off*3).toFixed(1)}deg;--y:${(Math.abs(off)*4).toFixed(0)}px" aria-label="${d.name} 내기"`;
   }
   const fx=fxParts(d).map(([ic,t])=>`<span><i class="ic ${ic}"></i>${t}</span>`).join('');
   return `<div class="${cls}" ${attrs} tabindex="0" role="button"><div class="c-band"><span class="c-seal">${seal}</span><span class="c-fac">${F?F.name:'기본 카드'}</span>${cost}</div><div class="c-name">${d.name}</div><div class="c-fx">${fx}</div>${d.target?'<span class="c-tag">구역에 놓기</span>':''}<span class="c-wm" aria-hidden="true">${seal}</span></div>`;
@@ -524,34 +667,45 @@ function cardHTML(c,o){
 function headerHTML(){
   const chips=S.players.map(p=>{
     const allies=FKEYS.filter(f=>S.alliances[f]===p.id).map(f=>`<span class="mini-seal f-${f}" title="${FACTIONS[f].name} 동맹">${FACTIONS[f].seal}</span>`).join('');
-    return `<div class="chip pc${p.id} ${S.turn===p.id&&!S.over?'turn':''}"><i class="ic cube"></i><span class="nm">${p.name}</span><span class="vp">${p.vp}<small>VP</small></span>${allies}</div>`;
+    return `<div class="chip pc${p.id} ${S.turn===p.id&&!S.over?'turn':''}"><i class="ic cube"></i><span class="nm">${p.name}</span><span class="vp">${p.vp}<small>VP</small></span><span class="at">${p.pos}번 칸</span>${allies}</div>`;
   }).join('');
   return `<header class="top"><div class="brand"><h1>안개항 의회</h1><span class="sub">${S.over?'게임 종료':`라운드 <b>${S.round}</b> / ${ROUNDS}`}</span></div>
   <div class="scores">${chips}</div>
   <div class="actions"><button class="btn" data-act="rules" data-fk="b-rules">규칙</button><button class="btn" data-act="speed" data-fk="b-speed">상대 속도: ${S.fast?'빠름':'보통'}</button><button class="btn" data-act="new" data-fk="b-new">새 게임</button></div></header>`;
 }
 
-function districtHTML(d){
-  const L=leaderOf(d);
-  const rows=d.cubes.map((n,i)=>{let pips='';for(let k=0;k<Math.min(n,12);k++)pips+='<span class="pip"></span>';
-    return `<div class="crow pc${i} ${n?'':'zero'}"><span class="pips">${pips}${n>12?`<span class="more">+${n-12}</span>`:''}</span><span class="n">${n}</span></div>`;}).join('');
-  const foot=L.w!=null?`장악 <b class="pc${L.w}">${S.players[L.w].name}</b>`:L.tie?'동점 · 지금은 아무도 장악 못 함':'비어 있음';
-  const cls=['district','f-'+d.f];
+function shipsAt(i){
+  const s=S.players.filter(p=>p.pos===i);
+  return s.length?`<span class="ships">${s.map(p=>`<i class="ship pc${p.id} ${S.turn===p.id&&!S.over?'cur':''}" title="${p.name}의 배"></i>`).join('')}</span>`:'';
+}
+
+function cellHTML(s){
+  const [r,c,edge]=cellPos(s.i),pos=`grid-area:${r}/${c};`,pulse=S.pulse===s.i?' pulse':'';
+  if(s.type==='corner')
+    return `<div class="cell corner ${s.key}${pulse}" style="${pos}" title="${s.name} · ${s.tip}"><b>${s.name}</b><span>${s.tip}</span>${shipsAt(s.i)}</div>`;
+  if(s.type==='event'){
+    const E=EVENTS[s.ev];
+    return `<div class="cell event e-${edge} ev-${s.ev}${pulse}" style="${pos}" title="${E.name} · ${E.tip}"><span class="band"></span><span class="cb"><i class="glyph"></i><span class="lb">${E.name}</span></span>${shipsAt(s.i)}</div>`;
+  }
+  const d=S.districts[s.did],L=leaderOf(d);
+  const cls=['cell','district','e-'+edge,'f-'+d.f];
   if(L.w!=null)cls.push('lead','pc'+L.w);
   if(S.targeting!=null)cls.push('aim');
-  if(S.pulse===d.id)cls.push('pulse');
-  return `<div class="${cls.join(' ')}" data-drop="district:${d.id}" data-did="${d.id}" data-fk="d-${d.id}" tabindex="0" role="button" aria-label="${d.name}, ${d.vp}VP, 큐브 ${S.players.map((p,i)=>p.name+' '+d.cubes[i]).join(', ')}">
-    <div class="d-top"><span class="seal">${FACTIONS[d.f].seal}</span><span class="d-name">${d.name}</span><span class="d-vp">${d.vp}<small>VP</small></span></div>
-    <div class="cubes">${rows}</div><div class="d-foot">${foot}</div></div>`;
+  if(S.turn===0&&!S.busy&&inRange(me(),d))cls.push('inrange');
+  if(pulse)cls.push('pulse');
+  const cubes=d.cubes.map((n,i)=>n?`<span class="cube pc${i}">${n}</span>`:'').join('');
+  const lead=L.w!=null?`장악: ${S.players[L.w].name}`:L.tie?'동점':'비어 있음';
+  return `<div class="${cls.join(' ')}" style="${pos}" data-drop="district:${d.id}" data-did="${d.id}" data-fk="d-${d.id}" tabindex="0" role="button"
+    title="${d.name} · ${d.vp}VP · ${lead}" aria-label="${d.name}, ${d.vp}VP, ${lead}, 큐브 ${S.players.map((p,i)=>p.name+' '+d.cubes[i]).join(', ')}">
+    <span class="band">${FACTIONS[d.f].seal}</span><span class="cb"><span class="d-name">${d.name}</span><span class="d-row"><span class="d-vp">${d.vp}</span><span class="cubes">${cubes}</span></span></span>${shipsAt(s.i)}</div>`;
 }
 
-function boardHTML(){
-  const t=S.districts.map(districtHTML);
-  return `<section class="board panel" aria-label="항구 지도"><div class="ph"><h2>항구 구역</h2><span class="meta">라운드가 끝날 때 큐브가 가장 많은 사람이 VP를 얻음 · 동점이면 없음</span></div>
-  <div class="map">${t.slice(0,4).join('')}<div class="canal" aria-hidden="true">운하</div>${t.slice(4).join('')}<div class="bay" aria-hidden="true">안개 낀 만</div></div></section>`;
-}
+function dieHTML(n){return `<span class="die ${S.rolling?'rolling':''}" aria-label="주사위 ${n}">${[0,1,2,3,4,5,6,7,8].map(k=>`<i class="${PIPS[n].includes(k)?'on':''}"></i>`).join('')}</span>`;}
 
-function sideHTML(){
+function centerHTML(){
+  const rose=`<svg class="compass" viewBox="-100 -100 200 200" aria-hidden="true"><circle r="92" fill="none" stroke="currentColor" stroke-width="1"/><circle r="84" fill="none" stroke="currentColor" stroke-width=".5" stroke-dasharray="2 4"/><circle r="40" fill="none" stroke="currentColor" stroke-width=".6"/>${[0,45,90,135,180,225,270,315].map((a,i)=>`<path transform="rotate(${a})" d="M0 ${i%2?-58:-88} L${i%2?7:11} -12 L0 0 L${i%2?-7:-11} -12Z" fill="currentColor" fill-opacity="${i%2?.35:.6}"/>`).join('')}</svg>`;
+  let track='';for(let i=1;i<=ROUNDS;i++)track+=`<span class="rt ${i<S.round?'done':''} ${i===S.round&&!S.over?'now':''}">${i}</span>`;
+  const who=S.over?'게임 종료':S.turn===0?(me().rolled?'나의 차례 · 행동하기':'나의 차례 · 주사위를 굴리세요'):`${S.players[S.turn].name}의 차례`;
   const mk=S.market.map((c,i)=>c?cardHTML(c,{mode:'market',i}):'<div class="card sm sold">매진</div>').join('');
   const facs=FKEYS.map(f=>{
     const h=S.alliances[f],F=FACTIONS[f];
@@ -560,28 +714,39 @@ function sideHTML(){
     return `<div class="fac f-${f}"><div class="fac-head"><span class="seal">${F.seal}</span><b>${F.name}</b><span class="ally ${h!=null?'on pc'+h:''}">${h!=null?'동맹 · '+S.players[h].name:'동맹 없음'}</span></div><p class="perk">${F.perk}</p>${reps}</div>`;
   }).join('');
   const logs=S.log.slice(-40).reverse().map(l=>`<li class="${l.pid==null?'sys':'pc'+l.pid}">${l.pid!=null?`<b>${S.players[l.pid].name}</b> · `:''}${l.html}</li>`).join('');
-  return `<aside class="side">
-    <section class="panel"><div class="ph"><h2>시장</h2><span class="meta">남은 카드 ${S.marketDeck.length}장</span></div><p class="hint">눌러서 사거나 버림 더미로 끌어 놓기 · 사면 그 세력 평판 +1</p><div class="mkt">${mk}</div></section>
-    <section class="panel"><div class="ph"><h2>세력과 동맹</h2><span class="meta">평판 ${ALLY_REP}부터 동맹 · 게임 끝에 동맹당 ${ALLY_VP}VP</span></div>${facs}</section>
-    <section class="panel"><div class="ph"><h2>항구 소식</h2></div><ol class="log">${logs}</ol></section></aside>`;
+  return `<div class="center"><div class="beam" aria-hidden="true"></div>${rose}
+    <div class="c-head"><div class="c-title">안개항</div><div class="c-sub">여든 칸의 항구 의회</div><div class="rtrack" aria-label="라운드 진행">${track}</div></div>
+    <div class="c-dice"><div class="dice">${dieHTML(S.dice[0])}${dieHTML(S.dice[1])}</div><div class="c-who">${who}</div>
+      ${myTurn()&&!me().rolled?'<button class="btn primary big" data-act="roll" data-fk="b-roll2">주사위 굴리기</button>':''}</div>
+    <section class="c-panel c-market"><div class="ph"><h2>시장</h2><span class="meta">남은 카드 ${S.marketDeck.length}장</span></div><p class="hint">눌러서 사거나 버림 더미로 끌어 놓기 · 사면 그 세력 평판 +1</p><div class="mkt">${mk}</div></section>
+    <section class="c-panel c-facs"><div class="ph"><h2>세력과 동맹</h2><span class="meta">평판 ${ALLY_REP}부터 동맹 · 끝에 동맹당 ${ALLY_VP}VP</span></div><div class="facgrid">${facs}</div></section>
+    <section class="c-panel c-log"><div class="ph"><h2>항구 소식</h2></div><ol class="log">${logs}</ol></section>
+  </div>`;
+}
+
+function boardHTML(){
+  return `<section class="board" aria-label="80칸 보드판"><div class="board-scroll"><div class="map">${S.spaces.map(cellHTML).join('')}${centerHTML()}</div></div></section>`;
 }
 
 function statusText(){
   if(S.over)return '게임이 끝났습니다. 새 게임을 눌러 다시 시작하세요.';
   if(S.turn!==0)return `<b>${S.players[S.turn].name}</b>의 턴 · ${S.banner||''}`;
-  if(S.targeting!=null){const c=me().hand.find(c=>c.uid===S.targeting);return `‘${CARDS[c.key].name}’ 카드를 쓸 구역을 지도에서 고르세요. 카드를 다시 누르거나 Esc를 누르면 취소됩니다.`;}
-  return '카드를 작전 테이블로 끌어 내세요. 영향력 토큰은 지도의 구역으로 끌어 놓거나, 구역을 누르면 큐브 1개가 놓입니다.';
+  if(S.busy)return `배가 항해하는 중… ${S.banner||''}`;
+  if(S.targeting!=null){const c=me().hand.find(c=>c.uid===S.targeting);return `‘${CARDS[c.key].name}’ 카드를 쓸 구역을 판에서 고르세요. 이 카드는 거리 제한 없이 어디든 쓸 수 있어요. Esc로 취소.`;}
+  if(!me().rolled)return '주사위를 굴려 배를 움직이세요. 카드는 먼저 내도 됩니다.';
+  return `배에서 ${RANGE}칸 안의 구역(밝게 표시)에 영향력 토큰을 끌어 놓거나 구역을 누르세요. ‘구역에 놓기’ 카드는 어디든 쓸 수 있어요.`;
 }
 
 function trayHTML(){
-  const p=me(),mt=myTurn();
-  const hand=p.hand.map((c,i)=>cardHTML(c,{mode:'hand',i})).join('')||'<p class="empty">손패가 비었습니다.</p>';
+  const p=me(),mt=myTurn(),n=p.hand.length;
+  const hand=p.hand.map((c,i)=>cardHTML(c,{mode:'hand',i,n})).join('')||'<p class="empty">손패가 비었습니다.</p>';
   const played=p.played.map(c=>`<li class="f-${CARDS[c.key].f||'neu'}"><span class="dot"></span>${CARDS[c.key].name}</li>`).join('');
   let tokens='';for(let i=0;i<Math.min(p.inf,8);i++)tokens+=`<span class="token" data-drag="token" data-id="t" data-fk="t-${i}" tabindex="0" role="button" aria-label="영향력 토큰"></span>`;
   if(p.inf>8)tokens+=`<span class="x">+${p.inf-8}</span>`;
   if(!p.inf)tokens='<span class="x">0</span>';
   const left=[];if(p.hand.length)left.push(`손패 ${p.hand.length}장`);if(p.coin)left.push(`금화 ${p.coin}`);if(p.inf)left.push(`영향력 ${p.inf}`);
   const basic=p.hand.some(c=>!CARDS[c.key].target);
+  const main=mt&&!p.rolled?`<button class="btn primary" data-act="roll" data-fk="b-roll">주사위 굴리기</button>`:`<button class="btn primary" data-act="end" data-fk="b-end" ${mt?'':'disabled'}>턴 종료</button>`;
   return `<section class="tray ${mt?'':'locked'}" data-drop="buy" aria-label="내 손패와 자원">
     <p class="status">${statusText()}</p>
     <div class="piles"><div class="pile deck ${S.shuffled===0?'shuffling':''}"><span class="pl">덱</span><b>${p.deck.length}</b></div><div class="pile discard" data-drop="discard"><span class="pl">버림</span><b>${p.discard.length}</b></div></div>
@@ -590,21 +755,22 @@ function trayHTML(){
     <div class="res">
       <div class="stat"><span class="lbl">금화</span><span class="num"><i class="ic coin"></i>${p.coin}</span></div>
       <div class="stat"><span class="lbl">영향력</span><div class="tokens">${tokens}</div></div>
-      <button class="btn" data-act="playall" data-fk="b-all" ${mt&&basic?'':'disabled'}>구역 카드 빼고 모두 내기</button>
-      <button class="btn primary" data-act="end" data-fk="b-end" ${mt?'':'disabled'}>턴 종료</button>
-      <p class="left">${mt&&left.length?`남은 것은 사라집니다: ${left.join(', ')}`:'&nbsp;'}</p>
+      <div class="btnrow"><button class="btn" data-act="playall" data-fk="b-all" ${mt&&basic?'':'disabled'}>모두 내기</button>${main}</div>
+      <p class="left">${mt&&p.rolled&&left.length?`남은 것은 사라짐: ${left.join(', ')}`:'&nbsp;'}</p>
     </div></section>`;
 }
 
-const RULES=`<h2>안개항 의회</h2><p>안개 낀 항구 도시의 네 세력 사이에서 영향력을 넓히세요. ${ROUNDS}라운드가 끝났을 때 VP가 가장 많은 사람이 이깁니다.</p>
+const RULES=`<h2>안개항 의회</h2><p>80칸 항구를 배로 돌며 네 세력 사이에서 영향력을 넓히세요. ${ROUNDS}라운드가 끝났을 때 VP가 가장 많은 사람이 이깁니다.</p>
 <h3>내 턴</h3><ol>
 <li><b>뽑기</b> · 덱에서 ${HAND}장을 뽑습니다. 덱이 비면 버림 더미를 섞어 새 덱을 만듭니다.</li>
-<li><b>카드 내기</b> · 손패를 작전 테이블로 끌어 놓으면 금화·영향력을 얻습니다. ‘구역에 놓기’ 카드는 지도의 구역 위에 놓습니다. 눌러도 됩니다.</li>
-<li><b>영향력 쓰기</b> · 영향력 1 = 큐브 1개. 보라색 토큰을 구역으로 끌거나 구역을 누르세요.</li>
-<li><b>카드 사기</b> · 금화로 시장 카드를 삽니다. 산 카드는 버림 더미로 가고, 나중에 섞여서 손에 들어옵니다. 세력 카드를 사면 그 세력 평판 +1.</li>
-<li><b>턴 종료</b> · 남은 손패, 금화, 영향력은 모두 사라집니다.</li></ol>
-<h3>라운드 결산</h3><p>세 사람이 한 번씩 턴을 하면 결산합니다. 각 구역에서 큐브가 가장 많은 사람(동점이면 없음)이 그 구역 VP와 세력 평판 +1을 얻습니다. 큐브는 다음 라운드에도 그대로 남습니다.</p>
-<h3>동맹</h3><p>한 세력의 평판이 처음으로 ${ALLY_REP}가 된 사람이 그 세력과 동맹을 맺고 동맹 효과를 받습니다. 다른 사람이 평판을 더 높이면 동맹을 빼앗깁니다. 게임이 끝날 때 동맹 하나당 ${ALLY_VP}VP를 더 받습니다.</p>`;
+<li><b>주사위</b> · 주사위 2개를 굴려 나온 수만큼 배가 움직입니다. 멈춘 칸의 효과를 받습니다. 구역 칸에 멈추면 그곳에 큐브 1개를 공짜로 놓습니다. 출항을 지나면 금화 +${PASS_COIN}.</li>
+<li><b>카드 내기</b> · 손패를 작전 테이블로 끌어 놓으면 금화·영향력을 얻습니다. ‘구역에 놓기’ 카드는 판 위 아무 구역에나 놓을 수 있습니다.</li>
+<li><b>영향력 쓰기</b> · 영향력 1 = 큐브 1개. 배에서 ${RANGE}칸 안에 있는 구역에만 놓을 수 있습니다.</li>
+<li><b>카드 사기</b> · 금화로 판 가운데 시장의 카드를 삽니다. 산 카드는 버림 더미로 갑니다. 세력 카드를 사면 그 세력 평판 +1.</li>
+<li><b>턴 종료</b> · 남은 손패, 금화, 영향력은 사라집니다.</li></ol>
+<h3>특별한 칸</h3><ul><li>금화 상자 +2 금화 · 뒷소문 +2 영향력 · 헌책방 카드 1장 · 폭풍 내 큐브 1개 잃음</li><li>등대 +2 영향력 · 세관 +3 금화 · 안개 낀 만 카드 2장</li></ul>
+<h3>라운드 결산</h3><p>각 구역에서 큐브가 가장 많은 사람(동점이면 없음)이 그 구역 VP와 세력 평판 +1을 얻습니다. 큐브는 계속 남습니다.</p>
+<h3>동맹</h3><p>한 세력의 평판을 처음 ${ALLY_REP}로 올린 사람이 동맹을 맺고 효과를 받습니다. 다른 사람이 평판을 더 높이면 동맹을 빼앗깁니다. 게임이 끝날 때 동맹 하나당 ${ALLY_VP}VP를 더 받습니다.</p>`;
 
 function modalHTML(){
   if(!S.modal)return '';
@@ -612,24 +778,27 @@ function modalHTML(){
   if(S.modal==='rules')inner=RULES+`<div class="foot"><button class="btn primary" data-act="close" data-fk="b-close">닫기</button></div>`;
   if(S.modal==='report'){
     const r=S.report;
-    const rows=r.rows.map(x=>`<li class="${x.w!=null?'pc'+x.w:''}"><span class="seal f-${x.d.f}">${FACTIONS[x.d.f].seal}</span><span class="grow">${x.d.name} · ${x.d.vp}VP</span>${x.w!=null?`<b>${S.players[x.w].name}</b>`:`<span class="meta">${x.tie?'동점':'비어 있음'}</span>`}</li>`).join('');
-    inner=`<h2>${r.round}라운드 결산</h2><p>${S.players.map((p,i)=>`${p.name} +${r.gain[i]}VP`).join(' · ')}</p><ul class="rep-list">${rows}</ul>
+    const rows=S.players.map((p,i)=>`<li class="pc${i}"><span><b>${p.name}</b> · 구역 ${r.won[i].length}곳 · +${r.gain[i]}VP</span><span class="ds">${r.won[i].join(', ')||'장악한 구역 없음'}</span></li>`).join('');
+    inner=`<h2>${r.round}라운드 결산</h2><p>각 구역에서 큐브가 가장 많은 사람이 점수를 얻었습니다.</p><ul class="rep-list">${rows}</ul>
     <div class="foot"><button class="btn primary" data-act="close" data-fk="b-close">${S.round}라운드 시작</button></div>`;
   }
   if(S.modal==='final'){
-    const rank=S.players.slice().sort((a,b)=>b.vp-a.vp||Object.values(b.rep).reduce((x,y)=>x+y)-Object.values(a.rep).reduce((x,y)=>x+y));
+    const sum=p=>Object.values(p.rep).reduce((x,y)=>x+y,0);
+    const rank=S.players.slice().sort((a,b)=>b.vp-a.vp||sum(b)-sum(a));
     const win=rank[0];
     const rows=rank.map(p=>`<tr class="pc${p.id}"><td>${p.name}</td><td>${p.distVP}</td><td>${p.allyVP}</td><td class="tot">${p.vp}</td></tr>`).join('');
     inner=`<h2>${win.human?'승리했습니다':win.name+' 승리'}</h2><p>${ROUNDS}라운드가 끝났습니다. 구역 VP에 동맹 보너스를 더한 최종 점수입니다.</p>
     <table class="score-t"><thead><tr><th>이름</th><th>구역</th><th>동맹</th><th>합계</th></tr></thead><tbody>${rows}</tbody></table>
-    <div class="foot"><button class="btn" data-act="close" data-fk="b-close">지도 보기</button><button class="btn primary" data-act="new" data-fk="b-again">새 게임</button></div>`;
+    <div class="foot"><button class="btn" data-act="close" data-fk="b-close">판 보기</button><button class="btn primary" data-act="new" data-fk="b-again">새 게임</button></div>`;
   }
   return `<div class="modal-back" data-act="back"><div class="modal" role="dialog" aria-modal="true">${inner}</div></div>`;
 }
 
 function render(){
   const fk=document.activeElement&&document.activeElement.dataset?document.activeElement.dataset.fk:null;
-  app.innerHTML=headerHTML()+`<main class="table">${boardHTML()}${sideHTML()}</main>`+trayHTML()+modalHTML();
+  const sc=document.querySelector('.board-scroll'),sx=sc?sc.scrollLeft:0;
+  app.innerHTML=headerHTML()+boardHTML()+trayHTML()+modalHTML();
+  const sc2=document.querySelector('.board-scroll');if(sc2)sc2.scrollLeft=sx;
   S.fresh=null;S.pulse=null;S.shuffled=null;
   if(fk){const el=app.querySelector(`[data-fk="${fk}"]`);if(el)el.focus({preventScroll:true});}
 }
@@ -637,17 +806,17 @@ function render(){
 // ───────── 드래그 앤 드롭 ─────────
 function validDrop(kind,id,drop){
   if(!drop)return false;
-  const isD=drop.startsWith('district:');
+  const isD=drop.startsWith('district:'),did=isD?+drop.split(':')[1]:null;
   if(kind==='hand'){const c=me().hand.find(c=>c.uid===+id);if(!c)return false;return CARDS[c.key].target?isD:(drop==='play'||isD);}
   if(kind==='market'){const c=S.market[+id];return !!c&&me().coin>=costFor(me(),CARDS[c.key])&&['play','buy','discard'].includes(drop);}
-  if(kind==='token')return isD&&me().inf>0;
+  if(kind==='token')return isD&&me().inf>0&&inRange(me(),S.districts[did]);
   return false;
 }
 function dropAt(x,y){const el=document.elementFromPoint(x,y);return el?el.closest('[data-drop]'):null;}
 function tap(kind,id){
   if(kind==='hand')humanPlay(+id);
   else if(kind==='market')humanBuy(+id);
-  else if(kind==='token')toast('토큰을 구역으로 끌거나, 구역을 누르면 큐브가 놓입니다.');
+  else if(kind==='token')toast(me().rolled?'토큰을 밝게 표시된 구역으로 끌거나, 그 구역을 누르세요.':'먼저 주사위를 굴리세요.');
 }
 document.addEventListener('pointerdown',e=>{
   if(!myTurn()||S.modal||e.button!==0)return;
@@ -659,10 +828,11 @@ document.addEventListener('pointermove',e=>{
   if(!drag.started){
     if(Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)<6)return;
     if(drag.kind==='market'&&!validDrop('market',drag.id,'buy')){const c=S.market[+drag.id];toast(`금화가 부족합니다. ${costFor(me(),CARDS[c.key])}개가 필요합니다.`);drag=null;return;}
+    if(drag.kind==='token'&&!me().rolled){toast('먼저 주사위를 굴리세요.');drag=null;return;}
     const r=drag.el.getBoundingClientRect();
-    drag.ox=drag.sx-r.left;drag.oy=drag.sy-r.top;
+    drag.ox=r.width/2;drag.oy=r.height/2;
     const g=drag.el.cloneNode(true);g.classList.add('ghost');g.classList.remove('dealt','sel');g.removeAttribute('data-drag');g.removeAttribute('data-fk');
-    g.style.width=r.width+'px';g.style.height=r.height+'px';
+    g.style.width=drag.el.offsetWidth+'px';g.style.height=drag.el.offsetHeight+'px';
     document.body.appendChild(g);drag.ghost=g;drag.started=true;
     drag.el.classList.add('dragging-src');document.body.classList.add('is-dragging');
     document.querySelectorAll('[data-drop]').forEach(t=>{if(validDrop(drag.kind,drag.id,t.dataset.drop))t.classList.add('drop-ok');});
@@ -687,7 +857,8 @@ document.addEventListener('pointerup',e=>{
   const t=dropAt(e.clientX,e.clientY);endDrag();drag=null;
   const drop=t&&t.dataset.drop;
   if(!validDrop(d.kind,d.id,drop)){
-    if(d.kind==='hand'&&drop){const c=me().hand.find(c=>c.uid===+d.id);if(c&&CARDS[c.key].target)toast('이 카드는 지도의 구역 위에 놓아야 합니다.');}
+    if(d.kind==='hand'&&drop){const c=me().hand.find(c=>c.uid===+d.id);if(c&&CARDS[c.key].target)toast('이 카드는 판 위의 구역에 놓아야 합니다.');}
+    if(d.kind==='token'&&drop&&drop.startsWith('district:'))toast(`배에서 ${RANGE}칸 안의 구역에만 놓을 수 있어요.`);
     render();return;
   }
   const did=drop.startsWith('district:')?+drop.split(':')[1]:null;
@@ -702,11 +873,12 @@ document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');
   if(b){
     const a=b.dataset.act;
-    if(a==='back'){if(e.target===b)S.modal=null,render();return;}
+    if(a==='back'){if(e.target===b){S.modal=null;render();}return;}
     if(a==='rules'){S.modal='rules';render();}
     else if(a==='close'){S.modal=null;render();}
     else if(a==='speed'){S.fast=!S.fast;render();}
-    else if(a==='new'){newGame();}
+    else if(a==='new')newGame();
+    else if(a==='roll')humanRoll();
     else if(a==='end')humanEndTurn();
     else if(a==='playall')playAll();
     return;
